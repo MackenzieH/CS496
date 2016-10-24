@@ -3,3 +3,6 @@ google-cloud-sdk/*
 HelloCloud/*
 flask-app/*
 Assignment2/*
+.metadata/*
+.project
+.pydevproject

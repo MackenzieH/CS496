@@ -1,0 +1,4 @@
+curl --data "username=John Smith" -H "Accept: application/json" http://holznecm-assign3.appspot.com/patient
+
+curl -H "Accept: application/json" http://holznecm-assign3.appspot.com/patient
+

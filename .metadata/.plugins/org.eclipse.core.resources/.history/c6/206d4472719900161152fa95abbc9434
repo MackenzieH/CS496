@@ -1,0 +1,113 @@
+#resources: lecture code
+
+import webapp2
+import db_models
+import json
+from google.appengine.ext import ndb
+
+class Patient(webapp2.RequestHandler):
+    def post(self):
+        new_patient = db_models.Patient()
+        username = self.request.get('username', default_value=None)
+        dob = self.request.get('dob', default_value=None)
+        insurance = self.request.get_all('insurance[]', default_value=None)
+        
+        if username:
+            new_patient.username = username
+        if dob:
+            new_patient.dob = dob
+        if insurance:
+            for insurance in insurance:
+                new_patient.insurance.append(ndb.Key(db_models.Insurance, int(insurance)))
+        key = new_patient.put()
+        out = new_patient.to_dict()
+        self.response.write(json.dumps(out))
+        return
+    
+    def get(self, **kwargs):
+        #when specific key is entered
+        if 'pid' in kwargs:
+            out = ndb.Key(db_models.Patient, int(kwargs['pid'])).get().to_dict()
+            self.response.write(json.dumps(out))
+            
+        #if no id is entered, then display all keys
+        else:
+            q = db_models.Patient.query()
+            results = [{'key':x.key.id(), 'username':x.username} for x in q.fetch()]
+            self.response.write(json.dumps(results))
+            
+class UpdatePatient(webapp2.RequestHandler):
+    def post(self):
+        #get the patient key
+        patientID = int(self.request.get('key'))
+        patient = db_models.Patient().get_by_id(int(patientID))
+        
+        username = self.request.get('username', default_value=None)
+        dob = self.request.get('dob', default_value=None)
+        insurance = self.request.get('insurance[]', default_value=None)
+        
+        #no changes are made to additional fields
+        if username:
+            patient.username = username
+        if dob:
+            patient.dob = dob
+        if insurance:
+            for insurance in insurance:
+                patient.insurance.append(ndb.Key(db_models.Insurance,int(insurance)))
+                
+        key = patient.put()
+        out = patient.to_dict()
+        self.response.write(json.dumps(out))
+        return
+    
+class DeletePatient(webapp2.RequestHandler):
+    def post(self):
+        #get patientID
+        patientID = int(self.request.get('key'))
+        patient = db_models.Patient().get_by_id(int(patientID))
+        patient.key.delete()
+
+class PatientInsurance(webapp2.RequestHandler):
+    def put(self, **kwargs):
+        if 'pid' in kwargs:
+            patient = ndb.Key(db_models.Patient, int(kwargs['pid'])).get()
+            if not patient:
+                self.response.status = 404
+                self.response.status_message = "Patient Not Found, Please Add Patient."
+                return
+        if 'iid' in kwargs:
+            insurance = ndb.Key(db_models.Insurance, int(kwargs['iid']))
+            if not patient:
+                self.response.status = 404
+                self.response.status_message = "Insurance Not Found, Please Add Appropriate Insurance."
+                return
+        if insurance not in patient.insurance:
+            patient.insurance.append(insurance)
+            patient.put()
+        self.response.write(json.dumps(patient.to_dict()))
+        return
+
+class PatientInsuranceDelete(webapp2.RequestHandler):
+    def delete(self, **kwargs):
+        if 'pid' in kwargs:
+            patient = ndb.Key(db_models.Patient, int(kwargs['pid'])).get()
+            if not patient:
+                self.response.status = 404
+                self.response.status_message = "Patient Not Found. Please enter correct PatientID."
+                return
+        if 'iid' in kwargs:
+            insurance = ndb.Key(db_models.Insurance, int(kwargs['iid']))
+            if not patient:
+                self.response.status = 404
+                self.response.status_message = "Insurance Not Found. Please enter correct InsuranceID."
+                return
+        for c in patient.insurance:
+            patient.insurance.append(insurance)
+            patient.put()
+            patient.insurance.remove(c)
+        self.response.write(patient.insurance[0])
+        s = patient.query()
+        self.response(s)
+        for c in patient.insurance:
+            self.response.write(json.dumps(patient.insurance))
+        return

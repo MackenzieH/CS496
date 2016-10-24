@@ -1,0 +1,3 @@
+curl --data "username=John Smith" -H "Accept: application/json" http://localhost:8080/insurance
+
+curl -H "Accept: application/json" http://localhost:8080/insurance

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	  <meta charset='utf-8'>
+	  <title>Assignment 3</title>
+	</head>
+	
+	<body>
+	
+		{% block content %}
+		<section>
+			<p> My attempt at assignment 3 for CS496 <br>
+			Click on the link of the action you'd like to do </p>
+		</section>
+		{% endblock %}
+	
+	</body>
+</html>
